@@ -214,7 +214,7 @@ function getState(m,qty,isI){
 }
 function emojiState(s){return{'DESPACHAR':'📦✅','LLAMAR_CONFIRMAR':'📋','LLAMAR_SUBIR':'📞','CANCELAR':'🚫','FLETE_ELEVADO':'⚠️','SIN_COBERTURA':'🚫📍'}[s]||'—';}
 function textState(s,alt){return{'DESPACHAR':'DESPACHAR','LLAMAR_CONFIRMAR':'LLAMAR CONFIRMAR DATOS','LLAMAR_SUBIR':'LLAMAR SUBIR A '+alt,'CANCELAR':'CANCELAR','FLETE_ELEVADO':'FLETE ELEVADO','SIN_COBERTURA':'SIN COBERTURA'}[s]||s;}
-function badge(s,alt){const mp={'DESPACHAR':['b-despachar','📦✅ DESPACHAR'],'LLAMAR_CONFIRMAR':['b-confirmar','📋 LLAMAR CONFIRMAR DATOS'],'LLAMAR_SUBIR':['b-subir','📞 LLAMAR SUBIR A '+alt],'CANCELAR':['b-cancelar','🚫 CANCELAR'],'FLETE_ELEVADO':['b-flete','⚠️ FLETE ELEVADO'],'SIN_COBERTURA':['b-sincobertura','🚫📍 SIN COBERTURA']};const[cls,label]=mp[s]||['b-sincobertura','—'];return`<span class="b ${cls}">${label}</span>`;}
+function badge(s,alt,match){const mp={'DESPACHAR':['b-despachar','📦✅ DESPACHAR'],'LLAMAR_CONFIRMAR':['b-confirmar','📋 LLAMAR CONFIRMAR DATOS'],'LLAMAR_SUBIR':['b-subir','📞 LLAMAR SUBIR A '+alt],'CANCELAR':['b-cancelar','🚫 CANCELAR'],'FLETE_ELEVADO':['b-flete','⚠️ FLETE ELEVADO'],'SIN_COBERTURA':['b-sincobertura','🚫📍 SIN COBERTURA']};const[cls,label]=mp[s]||['b-sincobertura','—'];const pin=(s==='DESPACHAR'&&match==='Fuzzy')?'📍':'';return`<span class="b ${cls}">${pin}${label}</span>`;}
 function rowCls(s){return{'DESPACHAR':'row-despachar','LLAMAR_CONFIRMAR':'row-confirmar','LLAMAR_SUBIR':'row-subir','CANCELAR':'row-cancelar','FLETE_ELEVADO':'row-flete','SIN_COBERTURA':'row-sincobertura'}[s]||'';}
 function parseLine(line,dq){
   const pts=line.split(/[,;\t]+/).map(p=>p.trim()).filter(Boolean);
@@ -258,7 +258,7 @@ function renderTable(rows,notFound){
     if(!r.found)return`<tr class="row-sincobertura"><td>${r.orig}</td><td style="color:#888">${r.deptIn||'—'}</td><td style="text-align:center">${r.qty}u</td><td colspan="4" style="color:#c00;font-weight:500">🚫📍 Sin cobertura Dropi</td><td></td><td></td></tr>`;
     const mb=r.match==='Exacto'?'<span class="b-me">Exacto</span>':'<span class="b-mf">Fuzzy</span>';
     const ct=r.carrier&&r.carrier!=='—'?`<span class="ct">${r.carrier}</span>`:'<span style="color:#aaa">—</span>';
-    return`<tr class="${rowCls(r.state)}"><td>${r.orig}</td><td style="color:#888">${r.deptIn||'—'}</td><td style="text-align:center;font-weight:500">${r.qty}u${r.qty>=4?' <span style="font-size:9px;color:#aaa">(ref3u)</span>':''}</td><td style="color:#888">${r.dept}</td><td style="font-weight:500">${r.dropi}</td><td style="text-align:center;font-size:16px">${emojiState(r.state)}</td><td>${badge(r.state,r.alt)}</td><td>${ct}</td><td>${mb}</td></tr>`;
+    return`<tr class="${rowCls(r.state)}"><td>${r.orig}</td><td style="color:#888">${r.deptIn||'—'}</td><td style="text-align:center;font-weight:500">${r.qty}u${r.qty>=4?' <span style="font-size:9px;color:#aaa">(ref3u)</span>':''}</td><td style="color:#888">${r.dept}</td><td style="font-weight:500">${r.dropi}</td><td style="text-align:center;font-size:16px">${(r.state==='DESPACHAR'&&r.match==='Fuzzy'?'📍':'')+emojiState(r.state)}</td><td>${badge(r.state,r.alt,r.match)}</td><td>${ct}</td><td>${mb}</td></tr>`;
   }).join('');
   const nc=document.getElementById('nocover');
   if(notFound.length){nc.style.display='block';nc.innerHTML='<strong>Sin cobertura ('+notFound.length+'):</strong> '+notFound.join(' · ');}
@@ -273,7 +273,7 @@ function copiarCSV(){
     r.qty+'u',
     r.dept,
     r.dropi,
-    emojiState(r.state),
+    (r.state==='DESPACHAR'&&r.match==='Fuzzy'?'📍':'')+emojiState(r.state),
     (estadoTexto[r.state]||r.state)+(r.alt?' '+r.alt:''),
     r.carrier==='—'?'':r.carrier,
     r.match
