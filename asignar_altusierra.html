@@ -212,9 +212,9 @@ function getState(m,qty,isI){
   if(d==='C')return{state:'CANCELAR',carrier:'—',alt:''};
   return{state:'LLAMAR_CONFIRMAR',carrier:car,alt:''};
 }
-function emojiState(s){return{'DESPACHAR':'📦','LLAMAR_CONFIRMAR':'📋','LLAMAR_SUBIR':'📞','CANCELAR':'🚫','FLETE_ELEVADO':'⚠️','SIN_COBERTURA':'🚫'}[s]||'—';}
+function emojiState(s){return{'DESPACHAR':'📦✅','LLAMAR_CONFIRMAR':'📋','LLAMAR_SUBIR':'📞','CANCELAR':'🚫','FLETE_ELEVADO':'⚠️','SIN_COBERTURA':'🚫📍'}[s]||'—';}
 function textState(s,alt){return{'DESPACHAR':'DESPACHAR','LLAMAR_CONFIRMAR':'LLAMAR CONFIRMAR DATOS','LLAMAR_SUBIR':'LLAMAR SUBIR A '+alt,'CANCELAR':'CANCELAR','FLETE_ELEVADO':'FLETE ELEVADO','SIN_COBERTURA':'SIN COBERTURA'}[s]||s;}
-function badge(s,alt){const mp={'DESPACHAR':['b-despachar','📦 DESPACHAR'],'LLAMAR_CONFIRMAR':['b-confirmar','📋 LLAMAR CONFIRMAR DATOS'],'LLAMAR_SUBIR':['b-subir','📞 LLAMAR SUBIR A '+alt],'CANCELAR':['b-cancelar','🚫 CANCELAR'],'FLETE_ELEVADO':['b-flete','⚠️ FLETE ELEVADO'],'SIN_COBERTURA':['b-sincobertura','🚫 SIN COBERTURA']};const[cls,label]=mp[s]||['b-sincobertura','—'];return`<span class="b ${cls}">${label}</span>`;}
+function badge(s,alt){const mp={'DESPACHAR':['b-despachar','📦✅ DESPACHAR'],'LLAMAR_CONFIRMAR':['b-confirmar','📋 LLAMAR CONFIRMAR DATOS'],'LLAMAR_SUBIR':['b-subir','📞 LLAMAR SUBIR A '+alt],'CANCELAR':['b-cancelar','🚫 CANCELAR'],'FLETE_ELEVADO':['b-flete','⚠️ FLETE ELEVADO'],'SIN_COBERTURA':['b-sincobertura','🚫📍 SIN COBERTURA']};const[cls,label]=mp[s]||['b-sincobertura','—'];return`<span class="b ${cls}">${label}</span>`;}
 function rowCls(s){return{'DESPACHAR':'row-despachar','LLAMAR_CONFIRMAR':'row-confirmar','LLAMAR_SUBIR':'row-subir','CANCELAR':'row-cancelar','FLETE_ELEVADO':'row-flete','SIN_COBERTURA':'row-sincobertura'}[s]||'';}
 function parseLine(line,dq){
   const pts=line.split(/[,;\t]+/).map(p=>p.trim()).filter(Boolean);
@@ -255,7 +255,7 @@ function renderTable(rows,notFound){
   const found=rows.filter(r=>r.found).length;
   document.getElementById('stats').textContent=found+' encontradas · '+notFound.length+' sin cobertura · '+rows.length+' total';
   document.getElementById('tbody').innerHTML=rows.map(r=>{
-    if(!r.found)return`<tr class="row-sincobertura"><td>${r.orig}</td><td style="color:#888">${r.deptIn||'—'}</td><td style="text-align:center">${r.qty}u</td><td colspan="4" style="color:#c00;font-weight:500">🚫 Sin cobertura Dropi</td><td></td><td></td></tr>`;
+    if(!r.found)return`<tr class="row-sincobertura"><td>${r.orig}</td><td style="color:#888">${r.deptIn||'—'}</td><td style="text-align:center">${r.qty}u</td><td colspan="4" style="color:#c00;font-weight:500">🚫📍 Sin cobertura Dropi</td><td></td><td></td></tr>`;
     const mb=r.match==='Exacto'?'<span class="b-me">Exacto</span>':'<span class="b-mf">Fuzzy</span>';
     const ct=r.carrier&&r.carrier!=='—'?`<span class="ct">${r.carrier}</span>`:'<span style="color:#aaa">—</span>';
     return`<tr class="${rowCls(r.state)}"><td>${r.orig}</td><td style="color:#888">${r.deptIn||'—'}</td><td style="text-align:center;font-weight:500">${r.qty}u${r.qty>=4?' <span style="font-size:9px;color:#aaa">(ref3u)</span>':''}</td><td style="color:#888">${r.dept}</td><td style="font-weight:500">${r.dropi}</td><td style="text-align:center;font-size:16px">${emojiState(r.state)}</td><td>${badge(r.state,r.alt)}</td><td>${ct}</td><td>${mb}</td></tr>`;
@@ -264,7 +264,32 @@ function renderTable(rows,notFound){
   if(notFound.length){nc.style.display='block';nc.innerHTML='<strong>Sin cobertura ('+notFound.length+'):</strong> '+notFound.join(' · ');}
   else nc.style.display='none';
 }
-function copiarCSV(){const h='Ciudad ingresada\tUnidades\tDepartamento\tCiudad Dropi\t¿Enviar?\tTransportadora\tMatch';const rows=lastResults.map(r=>[r.orig,r.qty+'u',r.dept,r.dropi,r.state+(r.alt?' '+r.alt:''),r.carrier,r.match].join('\t'));navigator.clipboard.writeText([h,...rows].join('\n')).then(()=>alert('Copiado. Pega en Excel con Ctrl+V')).catch(()=>alert('No se pudo copiar.'));}
+function copiarCSV(){
+  const h='Ciudad ingresada\tDpto. ingresado\tUds.\tDEPARTAMENTO\tCIUDAD\tEmoji\t¿Enviar?\tTRANSPORTADORA (OPCIONAL)\tMatch';
+  const estadoTexto={'DESPACHAR':'DESPACHAR','LLAMAR_CONFIRMAR':'LLAMAR CONFIRMAR DATOS','CANCELAR':'CANCELAR','FLETE_ELEVADO':'FLETE ELEVADO','SIN_COBERTURA':'SIN COBERTURA'};
+  const rows=lastResults.map(r=>[
+    r.orig,
+    r.deptIn||'',
+    r.qty+'u',
+    r.dept,
+    r.dropi,
+    emojiState(r.state),
+    (estadoTexto[r.state]||r.state)+(r.alt?' '+r.alt:''),
+    r.carrier==='—'?'':r.carrier,
+    r.match
+  ].join('\t'));
+  const txt=[h,...rows].join('\n');
+  navigator.clipboard.writeText(txt)
+    .then(()=>alert('Copiado ✅ — Pega en Excel con Ctrl+V'))
+    .catch(()=>{
+      const ta=document.createElement('textarea');
+      ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      alert('Copiado ✅ — Pega en Excel con Ctrl+V');
+    });
+}
 function limpiar(){document.getElementById('out').style.display='none';document.getElementById('inp').style.display='block';document.getElementById('inp').value='';document.querySelector('.controls').style.display='flex';document.querySelector('.hint').style.display='block';document.getElementById('tbody').innerHTML='';document.getElementById('resumen').innerHTML='';}
 </script>
 </body>
