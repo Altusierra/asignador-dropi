@@ -62,8 +62,6 @@ tr:hover td{filter:brightness(0.97)}
 </style>
 </head>
 <body>
-
-<!-- LOGIN -->
 <div id="login">
   <div class="login-box">
     <h2>Asignador Logístico</h2>
@@ -73,17 +71,15 @@ tr:hover td{filter:brightness(0.97)}
     <div class="login-error" id="pwd-error">Contraseña incorrecta</div>
   </div>
 </div>
-
-<!-- APP -->
 <div id="app">
 <div class="card">
 <h1>Asignador Logístico — Altusierra</h1>
 <p class="sub">1,540 ciudades · decisiones con data real · flete validado ≤$27,000</p>
 <p class="hint">
   Formato: <code>CIUDAD, UNIDADES, DEPARTAMENTO</code> &nbsp;|&nbsp; Reclame oficina: <code>CIUDAD, UNIDADES, DEPARTAMENTO, INTERRAPIDISIMO</code><br>
-  Ejemplos: <code>MEDELLIN, 1, ANTIOQUIA</code> &nbsp;·&nbsp; <code>BOGOTA, 3, CUNDINAMARCA</code> &nbsp;·&nbsp; <code>CARTAGENA, 2, BOLIVAR, INTERRAPIDISIMO</code>
+  Ejemplos: <code>MEDELLIN, 1, ANTIOQUIA</code> &nbsp;·&nbsp; <code>BOGOTA, 3, CUNDINAMARCA</code> &nbsp;·&nbsp; <code>CHIMA, 2, CORDOBA</code>
 </p>
-<textarea id="inp" placeholder="MEDELLIN, 1, ANTIOQUIA&#10;BOGOTA, 3, CUNDINAMARCA&#10;CALI, 2, VALLE&#10;BARRANQUILLA, 1&#10;CARTAGENA, 2, BOLIVAR, INTERRAPIDISIMO"></textarea>
+<textarea id="inp" placeholder="MEDELLIN, 1, ANTIOQUIA&#10;BOGOTA, 3, CUNDINAMARCA&#10;CALI, 2, VALLE&#10;CHIMA, 2, CORDOBA&#10;CARTAGENA, 2, BOLIVAR, INTERRAPIDISIMO"></textarea>
 <div class="controls">
   <div style="font-size:11px;color:#aaa;display:flex;align-items:center;gap:6px">
     Unidades por defecto:
@@ -102,16 +98,15 @@ tr:hover td{filter:brightness(0.97)}
   </div>
   <div class="scroll">
     <table><thead><tr>
-      <th style="width:16%">Ciudad ingresada</th><th style="width:5%">Uds.</th>
-      <th style="width:13%">Departamento</th><th style="width:16%">Ciudad Dropi</th>
-      <th style="width:22%">¿Enviar?</th><th style="width:14%">Transportadora</th><th style="width:8%">Match</th>
+      <th style="width:14%">Ciudad ingresada</th><th style="width:11%">Dept. ingresado</th><th style="width:4%">Uds.</th>
+      <th style="width:11%">Dept. Dropi</th><th style="width:14%">Ciudad Dropi</th>
+      <th style="width:20%">¿Enviar?</th><th style="width:12%">Transportadora</th><th style="width:8%">Match</th>
     </tr></thead><tbody id="tbody"></tbody></table>
   </div>
   <div id="nocover"></div>
 </div>
 </div>
 </div>
-
 <script>
 // ============================================================
 // CONTRASEÑA — cambia solo este valor para actualizar el acceso
@@ -123,22 +118,70 @@ const M={"ISCUANDE":["S","S","S",null,null,null,20],"PAILITAS":["N","S","S",null
 const DP={"0":"AMAZONAS","1":"ANTIOQUIA","2":"ARAUCA","3":"ATLANTICO","4":"BOLIVAR","5":"BOYACA","6":"CALDAS","7":"CAQUETA","8":"CASANARE","9":"CAUCA","10":"CESAR","11":"CHOCO","12":"CORDOBA","13":"CUNDINAMARCA","14":"GUAINIA","15":"GUAVIARE","16":"HUILA","17":"LA GUAJIRA","18":"MAGDALENA","19":"META","20":"NARIÑO","21":"NORTE DE SANTANDER","22":"PUTUMAYO","23":"QUINDIO","24":"RISARALDA","25":"SANTANDER","26":"SUCRE","27":"TOLIMA","28":"VALLE","29":"VAUPES","30":"VICHADA"};
 
 function verificar(){
-  const pwd=document.getElementById('pwd').value;
-  if(pwd===CLAVE){
+  if(document.getElementById('pwd').value===CLAVE){
     document.getElementById('login').style.display='none';
     document.getElementById('app').style.display='block';
-  } else {
+  }else{
     document.getElementById('pwd-error').style.display='block';
     document.getElementById('pwd').value='';
     document.getElementById('pwd').focus();
   }
 }
 
-function norm(s){return s.toUpperCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
-function lev(a,b){const m=a.length,n=b.length,dp=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i===0?j:j===0?i:0));for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);return dp[m][n];}
-function fuzzy(obj,q){if(obj[q])return{key:q,match:'Exacto'};let best=null,bd=999;for(const k of Object.keys(obj)){const d=lev(q,k),mx=Math.max(q.length,k.length);if(d<bd&&d<=Math.ceil(mx*0.35)){bd=d;best=k;}}return best?{key:best,match:'Fuzzy'}:null;}
+function norm(s){
+  return s.toUpperCase().trim()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+}
+function lev(a,b){
+  const m=a.length,n=b.length,dp=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i===0?j:j===0?i:0));
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function smartFuzzy(obj,q,dept){
+  const dn=dept?norm(dept):null;
+  // Con departamento: buscar primero en candidatos del dept
+  if(dn){
+    const cands={};
+    for(const k of Object.keys(obj)){
+      const v=obj[k]; const vd=Array.isArray(v)?norm(v[1]):null;
+      if(vd===dn) cands[k]=v;
+    }
+    if(Object.keys(cands).length>0){
+      if(cands[q]) return{key:q,match:'Exacto'};
+      // Prefijo en dept
+      let pfx=null,pd=999;
+      for(const k of Object.keys(cands)){if(k.startsWith(q)){const d=lev(q,k);if(d<pd){pd=d;pfx=k;}}}
+      if(pfx) return{key:pfx,match:'Fuzzy'};
+      // Fuzzy en dept
+      let best=null,bd=999;
+      for(const k of Object.keys(cands)){const d=lev(q,k),mx=Math.max(q.length,k.length);if(d<bd&&d<=Math.max(2,mx*0.5)){bd=d;best=k;}}
+      if(best) return{key:best,match:'Fuzzy'};
+    }
+  }
+  // Global
+  if(obj[q]) return{key:q,match:'Exacto'};
+  // Prefijo global
+  let pfx=null,pd=999;
+  for(const k of Object.keys(obj)){if(k.startsWith(q)){const d=lev(q,k);if(d<pd){pd=d;pfx=k;}}}
+  if(pfx) return{key:pfx,match:'Fuzzy'};
+  // Fuzzy global
+  let best=null,bd=999;
+  for(const k of Object.keys(obj)){const d=lev(q,k),mx=Math.max(q.length,k.length);if(d<bd&&d<=Math.max(1,mx*0.35)){bd=d;best=k;}}
+  return best?{key:best,match:'Fuzzy'}:null;
+}
+
 function getDec(m,q){if(!m)return 'S';return q<=1?m[0]:q===2?m[1]:m[2];}
-function bestC(m){if(!m)return null;const fe=m[3],fc=m[4];if(fe!==null&&fc!==null)return fe<=fc?'Envia':'Coordinadora';if(fe!==null)return 'Envia';if(fc!==null)return 'Coordinadora';return null;}
+function bestC(m){
+  if(!m)return null;
+  const fe=m[3],fc=m[4];
+  if(fe!==null&&fc!==null)return fe<=fc?'Envia':'Coordinadora';
+  if(fe!==null)return 'Envia';
+  if(fc!==null)return 'Coordinadora';
+  return null;
+}
 function getState(m,qty,isI){
   if(!m)return{state:'SIN_COBERTURA',carrier:'—',alt:''};
   const fe=m[3],fc=m[4],fi=m[5],car=bestC(m);
@@ -171,7 +214,17 @@ function getState(m,qty,isI){
 }
 function badge(s,alt){const mp={'DESPACHAR':['b-despachar','📦 DESPACHAR'],'LLAMAR_CONFIRMAR':['b-confirmar','📋 LLAMAR CONFIRMAR DATOS'],'LLAMAR_SUBIR':['b-subir','📞 LLAMAR SUBIR A '+alt],'CANCELAR':['b-cancelar','🚫 CANCELAR'],'FLETE_ELEVADO':['b-flete','⚠️ FLETE ELEVADO'],'SIN_COBERTURA':['b-sincobertura','🚫 SIN COBERTURA']};const[cls,label]=mp[s]||['b-sincobertura','—'];return`<span class="b ${cls}">${label}</span>`;}
 function rowCls(s){return{'DESPACHAR':'row-despachar','LLAMAR_CONFIRMAR':'row-confirmar','LLAMAR_SUBIR':'row-subir','CANCELAR':'row-cancelar','FLETE_ELEVADO':'row-flete','SIN_COBERTURA':'row-sincobertura'}[s]||'';}
-function parseLine(line,dq){const pts=line.split(/[,;\t]+/).map(p=>p.trim()).filter(Boolean);let city=pts[0],qty=dq,dept=null,isI=false;for(let i=1;i<pts.length;i++){const n=parseInt(pts[i]);if(!isNaN(n)&&n>=1)qty=n;else if(pts[i].toUpperCase().includes('INTERRAP'))isI=true;else if(!dept)dept=norm(pts[i]);}return{city,qty,dept,isI};}
+function parseLine(line,dq){
+  const pts=line.split(/[,;\t]+/).map(p=>p.trim()).filter(Boolean);
+  let city=pts[0],qty=dq,dept=null,isI=false;
+  for(let i=1;i<pts.length;i++){
+    const n=parseInt(pts[i]);
+    if(!isNaN(n)&&n>=1)qty=n;
+    else if(pts[i].toUpperCase().includes('INTERRAP'))isI=true;
+    else if(!dept)dept=pts[i];
+  }
+  return{city,qty,dept,isI};
+}
 let lastResults=[];
 function procesar(){
   const lines=document.getElementById('inp').value.split('\n').map(l=>l.trim()).filter(Boolean);
@@ -180,7 +233,9 @@ function procesar(){
   lastResults=[];const notFound=[],rows=[],counts={};
   for(const line of lines){
     const{city,qty,dept,isI}=parseLine(line,dq);
-    const q=norm(city),df=fuzzy(D,q),mf=fuzzy(M,q);
+    const q=norm(city);
+    const df=smartFuzzy(D,q,dept);
+    const mf=smartFuzzy(M,q,dept);
     const mv=mf?M[mf.key]:null;
     const{state,carrier,alt}=getState(mv,qty,isI);
     if(!df){notFound.push(line);rows.push({orig:city,qty,dept:'—',dropi:'—',state:'SIN_COBERTURA',carrier:'—',alt:'',match:'❌',found:false});}
