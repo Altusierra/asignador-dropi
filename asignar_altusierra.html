@@ -238,7 +238,7 @@ function procesar(){
     const mf=smartFuzzy(M,q,dept);
     const mv=mf?M[mf.key]:null;
     const{state,carrier,alt}=getState(mv,qty,isI);
-    if(!df){notFound.push(line);rows.push({orig:city,qty,dept:'—',dropi:'—',state:'SIN_COBERTURA',carrier:'—',alt:'',match:'❌',found:false});}
+    if(!df){notFound.push(line);rows.push({orig:city,qty,deptIn:dept||'',dept:'—',dropi:'—',state:'SIN_COBERTURA',carrier:'—',alt:'',match:'❌',found:false});}
     else{const rec=D[df.key];rows.push({orig:city,qty,dept:rec[1],dropi:rec[0],state,carrier,alt,match:df.match,found:true});}
     counts[state]=(counts[state]||0)+1;
   }
@@ -253,10 +253,10 @@ function renderTable(rows,notFound){
   const found=rows.filter(r=>r.found).length;
   document.getElementById('stats').textContent=found+' encontradas · '+notFound.length+' sin cobertura · '+rows.length+' total';
   document.getElementById('tbody').innerHTML=rows.map(r=>{
-    if(!r.found)return`<tr class="row-sincobertura"><td>${r.orig}</td><td style="text-align:center">${r.qty}u</td><td colspan="4" style="color:#c00;font-weight:500">🚫 Sin cobertura Dropi</td><td></td></tr>`;
+    if(!r.found)return`<tr class="row-sincobertura"><td>${r.orig}</td><td style="color:#888">${r.deptIn||'—'}</td><td style="text-align:center">${r.qty}u</td><td colspan="3" style="color:#c00;font-weight:500">🚫 Sin cobertura Dropi</td><td></td><td></td></tr>`;
     const mb=r.match==='Exacto'?'<span class="b-me">Exacto</span>':'<span class="b-mf">Fuzzy</span>';
     const ct=r.carrier&&r.carrier!=='—'?`<span class="ct">${r.carrier}</span>`:'<span style="color:#aaa">—</span>';
-    return`<tr class="${rowCls(r.state)}"><td>${r.orig}</td><td style="text-align:center;font-weight:500">${r.qty}u${r.qty>=4?' <span style="font-size:9px;color:#aaa">(ref3u)</span>':''}</td><td>${r.dept}</td><td style="font-weight:500">${r.dropi}</td><td>${badge(r.state,r.alt)}</td><td>${ct}</td><td>${mb}</td></tr>`;
+    return`<tr class="${rowCls(r.state)}"><td>${r.orig}</td><td style="color:#888">${r.deptIn||'—'}</td><td style="text-align:center;font-weight:500">${r.qty}u${r.qty>=4?' <span style="font-size:9px;color:#aaa">(ref3u)</span>':''}</td><td style="color:#888">${r.dept}</td><td style="font-weight:500">${r.dropi}</td><td>${badge(r.state,r.alt)}</td><td>${ct}</td><td>${mb}</td></tr>`;
   }).join('');
   const nc=document.getElementById('nocover');
   if(notFound.length){nc.style.display='block';nc.innerHTML='<strong>Sin cobertura ('+notFound.length+'):</strong> '+notFound.join(' · ');}
