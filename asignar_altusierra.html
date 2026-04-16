@@ -239,7 +239,7 @@ function procesar(){
     const mv=mf?M[mf.key]:null;
     const{state,carrier,alt}=getState(mv,qty,isI);
     if(!df){notFound.push(line);rows.push({orig:city,qty,deptIn:dept||'',dept:'—',dropi:'—',state:'SIN_COBERTURA',carrier:'—',alt:'',match:'❌',found:false});}
-    else{const rec=D[df.key];rows.push({orig:city,qty,dept:rec[1],dropi:rec[0],state,carrier,alt,match:df.match,found:true});}
+    else{const rec=D[df.key];rows.push({orig:city,qty,deptIn:dept||'',dept:rec[1],dropi:rec[0],state,carrier,alt,match:df.match,found:true});}
     counts[state]=(counts[state]||0)+1;
   }
   lastResults=rows;renderRes(counts);renderTable(rows,notFound);
