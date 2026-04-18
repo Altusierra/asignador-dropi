@@ -303,8 +303,8 @@ function procesar(){
     const{city,qty,dept,isI}=parseLine(line,dq);
     const q=norm(city);
     const df=smartFuzzy(D,q,dept);
-    const mf=smartFuzzy(M,q,dept);
-    const mv=mf?M[mf.key]:null;
+    // Usar la misma key de Dropi para buscar en el maestro (keys idénticas)
+    const mv=df?M[df.key]:null;
     const{state,carrier,alt}=getState(mv,qty,isI,neo);
     if(!df){
       notFound.push(line);
