@@ -146,6 +146,7 @@ function verificar(){
 }
 
 function norm(s){
+  if(!s) return '';
   return s.toUpperCase().trim()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
     .replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
@@ -295,6 +296,7 @@ function rowCls(s){return{'DESPACHAR':'row-despachar','LLAMAR_CONFIRMAR':'row-co
 
 function parseLine(line,dq){
   const pts=line.split(/[,;\t]+/).map(p=>p.trim()).filter(Boolean);
+  if(!pts.length) return {city:null,qty:dq,dept:null,isI:false};
   let city=pts[0],qty=dq,dept=null,isI=false;
   for(let i=1;i<pts.length;i++){
     const n=parseInt(pts[i]);
@@ -316,6 +318,7 @@ function procesar(){
   const notFound=[],rows=[],counts={};
   for(const line of lines){
     const{city,qty,dept,isI}=parseLine(line,dq);
+    if(!city) continue;
     const q=norm(city);
     const df=smartFuzzy(D,q,dept);
     // Usar la misma key de Dropi para buscar en el maestro (keys idénticas)
